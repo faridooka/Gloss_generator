@@ -60,4 +60,4 @@ def download_docx():
         doc.add_paragraph(line)
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".docx")
     doc.save(temp_file.name)
-    return send_file(temp_file.name, as_attachment=True, downl_
+    return send_file(temp_file.name, as_attachment=True, download_name="glossary.docx")
