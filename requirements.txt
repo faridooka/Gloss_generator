@@ -1,5 +1,5 @@
 flask
 flask-cors
+openai==0.28.1
 python-docx
-openai==1.0.0
 gunicorn
