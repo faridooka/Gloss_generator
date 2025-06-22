@@ -8,10 +8,10 @@ import openai
 app = Flask(__name__)
 CORS(app)
 
-# OpenAI API кілтін оқу
+# OpenAI API кілті (жергілікті немесе .env арқылы)
 openai.api_key = os.environ.get("OPENAI_API_KEY")
 
-# Глоссарий prompt-ы (жаңартылған)
+# GPT үшін prompt құру
 def build_glossary_prompt(topic, language_level):
     return f"""
 You are a CLIL glossary generator for Kazakhstani Informatics teachers.
@@ -23,11 +23,16 @@ For each term, provide:
 2. Translation in Kazakh
 3. Translation in Russian
 4. IPA pronunciation (e.g., /ˈælgərɪðəm/)
-5. A simple phonetic transliteration of the English pronunciation using Latin letters (e.g., 'al-guh-rith-um') – to help Kazakh students pronounce it in English
-6. A brief English definition written in simplified English, matching the {language_level} level
+5. A simple phonetic Latin-style transcription of how to pronounce the word (e.g., 'al-guh-rith-um')
+6. A very short English definition (max 15 words)
+7. A very short Kazakh translation of that definition (max 15 words)
 
-Return the glossary as a markdown table with this structure:
+Return the glossary as a markdown table like this:
 | Term | Kazakh | Russian | IPA | How to Read | Definition |
+Each row’s definition column must contain:
+
+**EN:** English definition  
+**KZ:** Қазақша аудармасы
 """
 
 @app.route("/generate_glossary", methods=["POST"])
@@ -58,16 +63,23 @@ def generate_glossary():
 @app.route("/download_glossary_docx", methods=["POST"])
 def download_docx():
     data = request.json
-    content = data.get("glossary", "")
-    
+    markdown = data.get("glossary", "")
+
+    if not markdown:
+        return jsonify({"error": "Glossary is empty"}), 400
+
+    # DOCX жасау
     doc = Document()
     doc.add_heading("CLIL Glossary", level=1)
 
-    for line in content.strip().split("\n"):
+    lines = markdown.strip().split('\n')
+    for line in lines:
         doc.add_paragraph(line)
 
+    # Уақытша файл жасау
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".docx")
     doc.save(temp_file.name)
+
     return send_file(temp_file.name, as_attachment=True, download_name="glossary.docx")
 
 if __name__ == "__main__":
