@@ -1,0 +1,5 @@
+flask
+flask-cors
+python-docx
+openai==1.0.0
+gunicorn
