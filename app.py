@@ -3,13 +3,13 @@ from flask_cors import CORS
 import os
 import tempfile
 from docx import Document
-from openai import OpenAI
+import openai
 
 app = Flask(__name__)
 CORS(app)
 
-# OpenAI API клиенті
-client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+# OpenAI API кілтін орнату
+openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 # Glossary үшін prompt құру
 def build_glossary_prompt(topic, language_level):
@@ -38,7 +38,7 @@ def generate_glossary():
 
     prompt = build_glossary_prompt(topic, level)
 
-    response = client.chat.completions.create(
+    response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": "You are a professional CLIL glossary generator."},
@@ -47,8 +47,9 @@ def generate_glossary():
         temperature=0.7
     )
 
-    result = response.choices[0].message.content
+    result = response.choices[0].message["content"]
     return jsonify({"glossary": result})
+
 
 @app.route("/download_glossary_docx", methods=["POST"])
 def download_docx():
@@ -61,3 +62,4 @@ def download_docx():
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".docx")
     doc.save(temp_file.name)
     return send_file(temp_file.name, as_attachment=True, download_name="glossary.docx")
+
